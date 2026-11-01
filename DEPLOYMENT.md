@@ -18,3 +18,7 @@ On Vercel connect `mini-cuvinte/game`, use `npm run build` and `dist`, and set b
 Full instructions: [Deploy from zero](docs/DEPLOY_FROM_ZERO.md). Database setup: [Supabase bootstrap](supabase/bootstrap/README.md). Dictionary maintenance: [DEXonline source adapter](https://github.com/mini-cuvinte/dexonline-API/blob/master/docs/DEXONLINE_SOURCE.md).
 
 Current state: no fresh-project end-to-end restore test has been completed. Do not run the bootstrap against the live project.
+
+### Existing Vercel project compatibility
+
+The build accepts either `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` or the existing Vercel names `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`. The unprefixed names take precedence if both exist. These values are browser-public; **never** use a service-role or secret key. The existing `mini-cuvinte.vercel.app` domain remains associated with the original Vercel project; changing the Git repository does not require creating a new Vercel project.
