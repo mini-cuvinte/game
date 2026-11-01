@@ -1,10 +1,8 @@
-# Portable Mini Cuvinte bootstrap
+# Application bootstrap (new Supabase instance only)
 
-This is an **application schema bootstrap** for a fresh Supabase-compatible PostgreSQL instance. It deliberately excludes player data, imported DEXonline content, and the 24-table `dexonline` staging schema. The import pipeline remains in `mini-cuvinte/dexonline-API`.
+This directory reconstructs the **game application** schema from live PostgreSQL metadata, without personal data or the DEXonline staging dataset.
 
-## Apply in a fresh Supabase project
-
-Use a trusted terminal with `psql` installed and a database connection string held in a local secret manager, not committed to GitHub.
+Run from the repository root against a NEW Supabase PostgreSQL database:
 
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/bootstrap/01-tables.sql
@@ -16,10 +14,12 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/bootstrap/06-rpc-grants.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/bootstrap/07-board-seed.sql
 ```
 
-This is **not yet validated with a clean restore**. Do not deploy it to production until the bootstrap is tested against an isolated database and all game RPC smoke tests pass. The SQL assumes Supabase Auth roles and functions such as `auth.uid()`; plain PostgreSQL alone will not provide Supabase Auth or the Data API.
+Apply functions from the repository root; `05-functions.psql` uses relative `\\ir` paths into `../snapshots/`.
 
-Configure the frontend's Supabase project URL and public/publishable key for the new project. The current `index.html` still contains the original project's connection details; it is not yet environment-agnostic. Never embed service-role credentials in browser code.
+Contents: 15 tables (`public`, `private`, `dictionary_private`), 47 constraints, 3 additional indexes, RLS for 7 public tables, 23 SQL functions, function execution grants, 49 board bonus positions.
 
-For a fresh install, the dictionary is intentionally empty; word validation will require a later approved dictionary import or separately licensed starter word list. Board bonus squares are seeded.
+This is **not a verified migration**. A new Supabase project must provide `auth.uid()`, Auth roles, PostgREST RPC and other Supabase facilities. Verify extensions, function ownership, RLS, grants and multiplayer behavior in an isolated test project before production.
 
-The bootstrap was reconstructed from live PostgreSQL catalogs; it is not the original migration history. Database grants, security-definer behavior and deployment settings must be reviewed for the target. The DEXonline import should be a separate, repeatable release job, not an API request per game.
+The DEXonline import is separate. A new install starts with no dictionary data, so word validation may not accept words until a licensed dictionary release is published.
+
+See [full deployment guide](../../docs/DEPLOY_FROM_ZERO.md).
