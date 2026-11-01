@@ -45,3 +45,9 @@ The bootstrap is reconstructed from the live database catalog and has **not** ye
 ## Security
 
 Never commit `.env`, database URLs containing credentials, service-role/secret keys, player data, or unlicensed dictionary content. Public browser configuration may contain only the Supabase publishable key.
+
+## Verified DEXonline ETL branch
+
+The legacy `dexonlineBK` scraper is not the complete integration. Bulk import, license checks, dictionary build and release scripts exist on `mini-cuvinte/dexonline-API` branch `modernize/python-fastapi`; the GitHub Actions workflows on `master` explicitly check out that branch. The current bulk source is `https://dexonline.ro/static/download/dex-database.sql.gz`. See [the full source-change and update playbook](docs/DEXONLINE.md).
+
+See also [dependency audit](docs/DEPENDENCIES.md) and [deployment guide](DEPLOYMENT.md). No clean-room deployment has yet been verified.
