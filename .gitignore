@@ -12,3 +12,7 @@ supabase/.branches/
 # Generated deployment artifacts and local runtime configuration
 /dist/
 /config.js
+
+# Generated deployment configuration
+dist/
+config.js
