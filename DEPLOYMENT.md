@@ -3,7 +3,7 @@
 ## Dependencies and requirements
 
 - Static hosting (Vercel, Netlify, Cloudflare Pages, Nginx, etc.)
-- Python 3 for the static build configuration generator
+- Node.js 20+ for the default `npm run build` (alternatively Python 3 + Bash with `bash scripts/build.sh`)
 - Supabase-compatible backend: PostgreSQL + Supabase Auth + PostgREST RPC (plain PostgreSQL alone is not sufficient)
 - `psql` and a database connection string for one-time bootstrap
 - No DEXonline connection required at game runtime
@@ -20,20 +20,20 @@
 | `SUPABASE_PUBLISHABLE_KEY` | Target project's publishable/anon key | Public browser key |
 | `DATABASE_URL` | One-time database bootstrap/ETL connection | **Yes: never expose to frontend** |
 
-4. Set build command `bash scripts/build.sh`, output directory `dist`. This creates `dist/index.html`, `dist/manifest.webmanifest`, `dist/config.js`. There is **no** dependency on nonexistent `sw.js` or `icon.svg`.
+4. Set build command `npm run build`, output directory `dist`. This creates `dist/index.html`, `dist/manifest.webmanifest`, `dist/config.js`. Optional `sw.js` and `icon.svg` are copied only when present; the build does not require them.
 5. Deploy and test guest sign-in, room creation/join, turn transitions, score and leaderboard. Word validation requires a later imported/approved dictionary.
 6. Set the Git integration to [mini-cuvinte/game](https://github.com/mini-cuvinte/game), branch `main`.
 
 ### Vercel
 
-Framework preset: **Other**; Root Directory: repository root; Build Command: `bash scripts/build.sh`; Output Directory: `dist`. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to the project's environment variables. Do not put `DATABASE_URL` in a frontend build unless strictly needed by a protected separate job.
+Framework preset: **Other**; Root Directory: repository root; Build Command: `npm run build`; Output Directory: `dist`. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to the project's environment variables. Do not put `DATABASE_URL` in a frontend build unless strictly needed by a protected separate job.
 
 ### Local
 
 ```bash
 export SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
 export SUPABASE_PUBLISHABLE_KEY="YOUR_PUBLIC_KEY"
-bash scripts/build.sh
+npm run build
 python3 -m http.server 8080 --directory dist
 ```
 
@@ -48,3 +48,7 @@ Do not publish the service-role key, database URL, import credentials, raw dicti
 ## Limitations
 
 The bootstrap was reconstructed from the live catalogs and has not yet passed a full clean-room smoke test. Supabase Auth, Realtime subscriptions, database grants and API settings must be validated on the new target. Do not assume a standalone PostgreSQL server provides Supabase API behavior.
+
+### Build entrypoints
+
+The checked-in `vercel.json` runs `npm run build`, which invokes `scripts/build.mjs`. The Python/Bash path (`bash scripts/build.sh`) is an alternative for hosts without Node.js. Both generate public `dist/config.js` from the same environment variables. Do not set Vercel's build command to an old hardcoded `cp sw.js icon.svg` command.
