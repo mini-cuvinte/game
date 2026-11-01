@@ -1,25 +1,30 @@
 # Mini Cuvinte
 
-Romanian multiplayer word game. Frontend recovered from the production Vercel deployment on 2026-10-31.
+Romanian multiplayer word game. Source is organized in two GitHub repositories:
 
-## Architecture
-- `index.html`: browser game, rooms, turns, bot play, authentication, leaderboard; calls Supabase RPC.
-- `manifest.webmanifest`: PWA manifest.
-- `supabase/schema/`: schema-only PostgreSQL snapshots, **never player data or credentials**.
-- `supabase/README.md`: backend inventory and recovery procedure.
+- [mini-cuvinte/game](https://github.com/mini-cuvinte/game): frontend, game database, RPCs and deployment.
+- [mini-cuvinte/dexonline-API](https://github.com/mini-cuvinte/dexonline-API): offline DEXonline extraction, license checks and dictionary releases.
 
-Supabase project ref: `ajrfqwscwejunzmfhwvw`.
+## Deploy from zero
 
-**Important:** Frontend files alone do not restore multiplayer. Supabase database objects, RLS, RPC grants and Auth configuration are required. Dictionary import scripts and workflows are currently in [dexonline-API](https://github.com/gabrielstanica/dexonline-API); do not copy copyrighted dictionary datasets into this public repository without license clearance.
+1. Create a fresh Supabase project with PostgreSQL, Auth and PostgREST. Enable anonymous authentication for guest players.
+2. Clone this repository and apply the ordered SQL scripts documented in [supabase/bootstrap/README.md](supabase/bootstrap/README.md). This creates 15 application tables, 23 functions, access rules and board bonuses. DEXonline staging tables and dictionary words are intentionally excluded.
+3. Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in your hosting environment. Run `bash scripts/build.sh`; deploy the generated `dist/` directory.
+4. Configure Auth Site URL and allowed redirects for the new domain. Test login, room creation/join, turns, score and leaderboard.
+5. Populate the dictionary separately from [dexonline-API](https://github.com/mini-cuvinte/dexonline-API), after source/license validation and approval. The game reads local database tables and never fetches DEXonline during a turn.
 
-## Repository grouping proposal
+The frontend is static and can run on Vercel, Netlify, Cloudflare Pages or any static server. The backend requires Supabase-compatible Auth and RPC infrastructure; PostgreSQL by itself is insufficient.
 
-Keep two repositories and one deployment:
-1. `mini-cuvinte` — game + Supabase backend schema and migrations + tests.
-2. `dexonline-API` — independent dictionary ETL, licensing audits, versioning workflows.
-3. Vercel — deployment of the game from `mini-cuvinte`.
+**Deployment status:** The reconstructed SQL bootstrap is committed but has **not** been validated by a clean-room restore. Treat it as a deployment candidate, not yet proven production-ready. With an empty dictionary, word validation may reject moves.
 
-Later, optionally create a GitHub organization or monorepo, but avoid merging histories while the ETL is evolving.
+## Documentation
 
-## Safety
-Never commit `.env`, `DATABASE_URL`, Supabase secret/service-role keys, auth users, player records, room contents or private dictionaries.
+- [Deployment](DEPLOYMENT.md)
+- [Backend bootstrap](supabase/bootstrap/README.md)
+- [Backup and restore](supabase/BACKUP_RESTORE.md)
+- [DEXonline integration and updates](docs/DEXONLINE.md)
+- [Dependency audit](docs/DEPENDENCIES.md)
+
+## Security
+
+Never commit private DB URLs, service-role keys, player data, raw dumps, or dictionary material without redistribution rights. Browser configuration uses only a public Supabase key.
