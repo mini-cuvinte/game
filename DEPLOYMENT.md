@@ -1,54 +1,20 @@
-# Deploy Mini Cuvinte on a new infrastructure
+# Deployment configuration
 
-## Dependencies and requirements
+The frontend is **environment-specific at build time**, not hardwired to the original Supabase project.
 
-- Static hosting (Vercel, Netlify, Cloudflare Pages, Nginx, etc.)
-- Node.js 20+ for the default `npm run build` (alternatively Python 3 + Bash with `bash scripts/build.sh`)
-- Supabase-compatible backend: PostgreSQL + Supabase Auth + PostgREST RPC (plain PostgreSQL alone is not sufficient)
-- `psql` and a database connection string for one-time bootstrap
-- No DEXonline connection required at game runtime
-
-## Fresh deployment
-
-1. Create a new Supabase project. Enable anonymous sign-in in Authentication if guests are used. Configure Site URL and redirect allow-list for the new host.
-2. Run [the bootstrap SQL](supabase/bootstrap/README.md) against the **new** database, not production.
-3. Set the following environment variables in the hosting provider:
-
-| Variable | Purpose | Secret? |
-|---|---|---|
-| `SUPABASE_URL` | Target Supabase project HTTPS URL | No |
-| `SUPABASE_PUBLISHABLE_KEY` | Target project's publishable/anon key | Public browser key |
-| `DATABASE_URL` | One-time database bootstrap/ETL connection | **Yes: never expose to frontend** |
-
-4. Set build command `npm run build`, output directory `dist`. This creates `dist/index.html`, `dist/manifest.webmanifest`, `dist/config.js`. Optional `sw.js` and `icon.svg` are copied only when present; the build does not require them.
-5. Deploy and test guest sign-in, room creation/join, turn transitions, score and leaderboard. Word validation requires a later imported/approved dictionary.
-6. Set the Git integration to [mini-cuvinte/game](https://github.com/mini-cuvinte/game), branch `main`.
-
-### Vercel
-
-Framework preset: **Other**; Root Directory: repository root; Build Command: `npm run build`; Output Directory: `dist`. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to the project's environment variables. Do not put `DATABASE_URL` in a frontend build unless strictly needed by a protected separate job.
-
-### Local
+- `SUPABASE_URL` (required): target Supabase HTTPS project URL.
+- `SUPABASE_PUBLISHABLE_KEY` (required): target public browser key. Never use `sb_secret_...` or a service-role key.
+- `npm run build` (Node.js 20+) creates `dist/config.js` with `window.MINI_CUVINTE_CONFIG`. The browser loads this before the application module.
 
 ```bash
-export SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
-export SUPABASE_PUBLISHABLE_KEY="YOUR_PUBLIC_KEY"
-npm run build
-python3 -m http.server 8080 --directory dist
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_KEY npm run build
+python3 -m http.server 8080 -d dist
 ```
 
-Open `http://localhost:8080`. If using a local Supabase stack, set `SUPABASE_URL` to the browser-accessible local API URL.
+On Vercel connect `mini-cuvinte/game`, use `npm run build` and `dist`, and set both environment variables in the Vercel project. For another static host upload the contents of `dist/`.
 
-## Runtime config and safety
+**Important:** the browser requires Supabase Auth + PostgREST RPC; an ordinary PostgreSQL database alone is insufficient. `@supabase/supabase-js@2.57.0` is loaded from esm.sh at runtime.
 
-`index.html` loads `/config.js` before the JS module. The build creates `window.MINI_CUVINTE_CONFIG = {supabaseUrl, supabasePublishableKey}`. There is no fallback to the previous production project: a missing config fails explicitly. `config.example.js` is a template, not a live config.
+Full instructions: [Deploy from zero](docs/DEPLOY_FROM_ZERO.md). Database setup: [Supabase bootstrap](supabase/bootstrap/README.md). Dictionary maintenance: [DEXonline source adapter](https://github.com/mini-cuvinte/dexonline-API/blob/master/docs/DEXONLINE_SOURCE.md).
 
-Do not publish the service-role key, database URL, import credentials, raw dictionary dumps, or player records. Regenerate the static build after changing environments. For deployment without a build step, create a `config.js` from the example with the new public URL/key and serve it next to `index.html`.
-
-## Limitations
-
-The bootstrap was reconstructed from the live catalogs and has not yet passed a full clean-room smoke test. Supabase Auth, Realtime subscriptions, database grants and API settings must be validated on the new target. Do not assume a standalone PostgreSQL server provides Supabase API behavior.
-
-### Build entrypoints
-
-The checked-in `vercel.json` runs `npm run build`, which invokes `scripts/build.mjs`. The Python/Bash path (`bash scripts/build.sh`) is an alternative for hosts without Node.js. Both generate public `dist/config.js` from the same environment variables. Do not set Vercel's build command to an old hardcoded `cp sw.js icon.svg` command.
+Current state: no fresh-project end-to-end restore test has been completed. Do not run the bootstrap against the live project.
