@@ -1,30 +1,39 @@
 # Mini Cuvinte
 
-Romanian multiplayer word game. Source is organized in two GitHub repositories:
+Romanian multiplayer word game. Source-of-truth repositories in the [mini-cuvinte organization](https://github.com/mini-cuvinte):
 
-- [mini-cuvinte/game](https://github.com/mini-cuvinte/game): frontend, game database, RPCs and deployment.
-- [mini-cuvinte/dexonline-API](https://github.com/mini-cuvinte/dexonline-API): offline DEXonline extraction, license checks and dictionary releases.
+- **[game](https://github.com/mini-cuvinte/game)** — browser frontend, PostgreSQL/Supabase schema, RPC logic, board seed, deployment configuration.
+- **[dexonline-API](https://github.com/mini-cuvinte/dexonline-API)** — independent Python client for DEXonline; future dictionary import and versioning work belongs here.
 
 ## Deploy from zero
 
-1. Create a fresh Supabase project with PostgreSQL, Auth and PostgREST. Enable anonymous authentication for guest players.
-2. Clone this repository and apply the ordered SQL scripts documented in [supabase/bootstrap/README.md](supabase/bootstrap/README.md). This creates 15 application tables, 23 functions, access rules and board bonuses. DEXonline staging tables and dictionary words are intentionally excluded.
-3. Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in your hosting environment. Run `bash scripts/build.sh`; deploy the generated `dist/` directory.
-4. Configure Auth Site URL and allowed redirects for the new domain. Test login, room creation/join, turns, score and leaderboard.
-5. Populate the dictionary separately from [dexonline-API](https://github.com/mini-cuvinte/dexonline-API), after source/license validation and approval. The game reads local database tables and never fetches DEXonline during a turn.
+1. Provision a **new Supabase project** (or a Supabase-compatible self-hosted stack with Auth, PostgREST and PostgreSQL). A bare PostgreSQL database is insufficient.
+2. Apply `supabase/bootstrap/01-tables.sql` through `07-board-seed.sql` **in numeric order**, using `psql`; step 05 uses `psql` include directives. See [bootstrap instructions](supabase/bootstrap/README.md).
+3. In Supabase Auth, enable the sign-in methods used by the frontend (anonymous and email/password), configure allowed redirect URLs and verify API schema exposure. Review SQL permissions and RLS before opening the service.
+4. In Vercel or another CI/static host, configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (public browser key, **not** service role). Run `python3 scripts/build.py` and publish `dist/`. `vercel.json` provides these settings for Vercel.
+5. Test registration/anonymous login, room creation, joining, turns, scoring, leaderboard and game completion in an isolated environment. The reconstructed SQL bootstrap **has not yet passed a clean-install integration test**.
 
-The frontend is static and can run on Vercel, Netlify, Cloudflare Pages or any static server. The backend requires Supabase-compatible Auth and RPC infrastructure; PostgreSQL by itself is insufficient.
+The game requires no dictionary download at build time. A fresh database intentionally starts without DEXonline entries; word acceptance remains limited until a licensed word set is imported.
 
-**Deployment status:** The reconstructed SQL bootstrap is committed but has **not** been validated by a clean-room restore. Treat it as a deployment candidate, not yet proven production-ready. With an empty dictionary, word validation may reject moves.
+## Runtime configuration
 
-## Documentation
+`index.html` loads `/config.js`, which defines `window.MINI_CUVINTE_CONFIG`. The build script generates it from environment variables; it is excluded from Git. There is **no hardcoded production Supabase fallback**. The Supabase JavaScript client is currently pinned to `@supabase/supabase-js@2.57.0` via esm.sh. The game frontend has no npm install step.
 
-- [Deployment](DEPLOYMENT.md)
-- [Backend bootstrap](supabase/bootstrap/README.md)
-- [Backup and restore](supabase/BACKUP_RESTORE.md)
-- [DEXonline integration and updates](docs/DEXONLINE.md)
-- [Dependency audit](docs/DEPENDENCIES.md)
+## Database layout
 
-## Security
+- `public`: rooms, members, events, word requests, profiles, results and public dictionary interface.
+- `private`: board state, player racks, bonus squares and word validation.
+- `dictionary_private`: dictionary versions, entries, overrides and active version.
+- `supabase/bootstrap/`: application-only installation SQL.
+- `supabase/snapshots/`: catalog exports for audit/reference, **not** a substitute for the ordered bootstrap.
+- `supabase/scripts/`: private full-data backup/restore helpers, separate from application source deployment.
 
-Never commit private DB URLs, service-role keys, player data, raw dumps, or dictionary material without redistribution rights. Browser configuration uses only a public Supabase key.
+## DEXonline flow
+
+`dexonline-API` is a separate Python scraping client, **not** an official DEXonline API or a production-ready bulk importer. Later, a controlled ETL job will read permitted source data, normalize and validate entries, populate `dictionary_private` staging/version tables and publish an approved active version. The game checks its **local database**, not DEXonline on every move. See [DEXonline integration and update guide](docs/DEXONLINE.md).
+
+**Licensing:** Do not redistribute or bulk-import dictionary datasets without verifying the license and terms of the selected source. Do not commit personal player data, DB credentials, secret keys or unlicensed dictionary exports.
+
+## Deployment and operations
+
+See [deployment details](DEPLOYMENT.md), [database bootstrap](supabase/bootstrap/README.md), and [dictionary maintenance](docs/DEXONLINE.md).
