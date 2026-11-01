@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS "dictionary_private"."overrides" (
 );
 
 CREATE TABLE IF NOT EXISTS "dictionary_private"."versions" (
-  "id" bigint NOT NULL,
+  "id" bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   "label" text NOT NULL,
   "status" text DEFAULT 'building'::text NOT NULL,
   "source" text NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS "public"."player_results" (
 );
 
 CREATE TABLE IF NOT EXISTS "public"."room_events" (
-  "id" bigint NOT NULL,
+  "id" bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   "room_id" uuid NOT NULL,
   "turn_number" bigint NOT NULL,
   "actor_id" uuid,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS "public"."rooms" (
 );
 
 CREATE TABLE IF NOT EXISTS "public"."word_requests" (
-  "id" bigint NOT NULL,
+  "id" bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   "room_id" uuid NOT NULL,
   "requested_by" uuid NOT NULL,
   "word" text NOT NULL,
