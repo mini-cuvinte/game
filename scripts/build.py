@@ -7,8 +7,8 @@ import shutil
 
 root = pathlib.Path(__file__).resolve().parents[1]
 dist = root / "dist"
-url = os.environ.get("SUPABASE_URL", "").strip()
-key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+url = (os.environ.get("SUPABASE_URL") or os.environ.get("VITE_SUPABASE_URL") or "").strip()
+key = (os.environ.get("SUPABASE_PUBLISHABLE_KEY") or os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or "").strip()
 if not url.startswith(("https://", "http://localhost:", "http://127.0.0.1:")):
     raise SystemExit("SUPABASE_URL must be a valid HTTPS URL (or localhost)")
 if not key or key.startswith("YOUR_"):
