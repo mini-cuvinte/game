@@ -1,0 +1,25 @@
+-- Run after 01-04 bootstrap SQL, on a NEW Supabase project.
+-- Function definitions are sourced from the live database.
+\ir ../snapshots/private/remove_one_tile.sql
+\ir ../snapshots/private/tile_bag.sql
+\ir ../snapshots/private/tile_points.sql
+\ir ../snapshots/private/is_member.sql
+\ir ../snapshots/private/word_cells.sql
+\ir ../snapshots/private/check_word.sql
+\ir ../snapshots/private/score_word.sql
+\ir ../snapshots/dictionary_private/publish_version.sql
+\ir ../snapshots/public/my_profile.sql
+\ir ../snapshots/public/save_profile.sql
+\ir ../snapshots/public/leaderboard.sql
+\ir ../snapshots/public/create_room.sql
+\ir ../snapshots/public/join_room.sql
+\ir ../snapshots/public/start_room.sql
+\ir ../snapshots/public/game_snapshot.sql
+\ir ../snapshots/public/room_snapshot.sql
+\ir ../snapshots/public/room_word_requests.sql
+\ir ../snapshots/public/suggest_word.sql
+\ir ../snapshots/public/room_review_word.sql
+\ir ../snapshots/public/room_admin_timer.sql
+\ir ../snapshots/public/play_tiles.sql
+\ir ../snapshots/public/advance_turn.sql
+\ir ../snapshots/public/record_finished_game.sql
