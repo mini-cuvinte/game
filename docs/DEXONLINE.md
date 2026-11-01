@@ -3,7 +3,7 @@
 ## Responsibility boundaries
 
 - [mini-cuvinte/game](https://github.com/mini-cuvinte/game) contains the game and its PostgreSQL schema, including versioned dictionary tables.
-- [mini-cuvinte/dexonline-API](https://github.com/mini-cuvinte/dexonline-API) contains the existing Python DEXonline HTML client. It is **not an official API**, and its current functions fetch individual definitions, word-of-day/month, paradigms and random words. It does **not** yet implement a bulk ETL pipeline to Supabase.
+- [mini-cuvinte/dexonline-API](https://github.com/mini-cuvinte/dexonline-API) contains the existing Python DEXonline HTML client. It is **not an official API**, and its current functions fetch individual definitions, word-of-day/month, paradigms and random words. The legacy `dexonlineBK` client alone does not provide bulk ETL; newer bulk import scripts and GitHub Actions workflows exist on branch `modernize/python-fastapi` (see verified section below).
 - The game should validate moves against its own local, published dictionary version. No live request to DEXonline is needed for a turn.
 
 ## When DEXonline changes its website
