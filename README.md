@@ -1,39 +1,47 @@
 # Mini Cuvinte
 
-Romanian multiplayer word game. Source-of-truth repositories in the [mini-cuvinte organization](https://github.com/mini-cuvinte):
+Romanian multiplayer word game with a static browser frontend and a Supabase backend. The project is organized under the [mini-cuvinte GitHub organization](https://github.com/mini-cuvinte).
 
-- **[game](https://github.com/mini-cuvinte/game)** — browser frontend, PostgreSQL/Supabase schema, RPC logic, board seed, deployment configuration.
-- **[dexonline-API](https://github.com/mini-cuvinte/dexonline-API)** — independent Python client for DEXonline; future dictionary import and versioning work belongs here.
+## Start here
 
-## Deploy from zero
+- **[Deploy from zero on a new infrastructure](docs/DEPLOY_FROM_ZERO.md)** — database bootstrap, environment variables, static build, Vercel or another host, and smoke tests.
+- [Deployment configuration](DEPLOYMENT.md) — frontend configuration and prerequisites.
+- [Supabase bootstrap](supabase/bootstrap/README.md) — schema, constraints, indexes, RLS, 23 RPC functions, permissions, board seed.
+- [Supabase backup/restore](supabase/BACKUP_RESTORE.md) — private data backup, separate from clean install.
+- [DEXonline source adapter](https://github.com/mini-cuvinte/dexonline-API) — independent project, with [source-change maintenance](https://github.com/mini-cuvinte/dexonline-API/blob/master/docs/DEXONLINE_SOURCE.md) and [dictionary import plan](https://github.com/mini-cuvinte/dexonline-API/blob/master/docs/IMPORT_PIPELINE.md).
 
-1. Provision a **new Supabase project** (or a Supabase-compatible self-hosted stack with Auth, PostgREST and PostgreSQL). A bare PostgreSQL database is insufficient.
-2. Apply `supabase/bootstrap/01-tables.sql` through `07-board-seed.sql` **in numeric order**, using `psql`; step 05 uses `psql` include directives. See [bootstrap instructions](supabase/bootstrap/README.md).
-3. In Supabase Auth, enable the sign-in methods used by the frontend (anonymous and email/password), configure allowed redirect URLs and verify API schema exposure. Review SQL permissions and RLS before opening the service.
-4. In Vercel or another CI/static host, configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (public browser key, **not** service role). Run `npm run build` (Node.js 20+) and publish `dist/`. `vercel.json` provides these settings for Vercel.
-5. Test registration/anonymous login, room creation, joining, turns, scoring, leaderboard and game completion in an isolated environment. The reconstructed SQL bootstrap **has not yet passed a clean-install integration test**.
+## Repository layout
 
-The game requires no dictionary download at build time. A fresh database intentionally starts without DEXonline entries; word acceptance remains limited until a licensed word set is imported.
+| Path | Purpose |
+|---|---|
+| `index.html` | Browser game and Supabase RPC client |
+| `manifest.webmanifest` | PWA metadata |
+| `config.example.js` | Example target Supabase public configuration |
+| `scripts/build.mjs` | Builds static `dist/` and target-specific `config.js` |
+| `vercel.json` | Vercel static build settings |
+| `supabase/bootstrap/` | Application schema bootstrap without dictionary contents |
+| `supabase/snapshots/` | SQL function exports and live database metadata |
+| `supabase/scripts/` | Private backup and restore helpers |
+| `docs/` | Deployment architecture and operational documentation |
 
-## Runtime configuration
+## Quick frontend build
 
-`index.html` loads `/config.js`, which defines `window.MINI_CUVINTE_CONFIG`. The build script generates it from environment variables; it is excluded from Git. There is **no hardcoded production Supabase fallback**. The Supabase JavaScript client is currently pinned to `@supabase/supabase-js@2.57.0` via esm.sh. The frontend has no third-party npm runtime dependencies; `package.json` supplies the build script.
+```bash
+export SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
+export SUPABASE_PUBLISHABLE_KEY="YOUR_PUBLIC_PUBLISHABLE_KEY"
+npm run build
+```
 
-## Database layout
+The frontend now **requires** a deployment-generated `config.js` instead of silently connecting to the old production Supabase project. It loads `@supabase/supabase-js@2.57.0` from esm.sh.
 
-- `public`: rooms, members, events, word requests, profiles, results and public dictionary interface.
-- `private`: board state, player racks, bonus squares and word validation.
-- `dictionary_private`: dictionary versions, entries, overrides and active version.
-- `supabase/bootstrap/`: application-only installation SQL.
-- `supabase/snapshots/`: catalog exports for audit/reference, **not** a substitute for the ordered bootstrap.
-- `supabase/scripts/`: private full-data backup/restore helpers, separate from application source deployment.
+## Dictionary strategy
 
-## DEXonline flow
+Install the game schema with an empty dictionary. Later, import a licensed and validated dataset through the separate `dexonline-API` project, publish a version in Supabase, and query it locally during gameplay. No per-game remote DEXonline requests. The import pipeline is not yet implemented.
 
-`dexonline-API` is a separate Python scraping client, **not** an official DEXonline API or a production-ready bulk importer. Later, a controlled ETL job will read permitted source data, normalize and validate entries, populate `dictionary_private` staging/version tables and publish an approved active version. The game checks its **local database**, not DEXonline on every move. See [DEXonline integration and update guide](docs/DEXONLINE.md).
+## Deployment status
 
-**Licensing:** Do not redistribute or bulk-import dictionary datasets without verifying the license and terms of the selected source. Do not commit personal player data, DB credentials, secret keys or unlicensed dictionary exports.
+The bootstrap is reconstructed from the live database catalog and has **not** yet been validated by a fresh-project restore and multiplayer smoke tests. Do not assume the project is production-ready on an arbitrary new Supabase instance. The current Vercel Git integration may still refer to the repository's old owner.
 
-## Deployment and operations
+## Security
 
-See [deployment details](DEPLOYMENT.md), [database bootstrap](supabase/bootstrap/README.md), and [dictionary maintenance](docs/DEXONLINE.md).
+Never commit `.env`, database URLs containing credentials, service-role/secret keys, player data, or unlicensed dictionary content. Public browser configuration may contain only the Supabase publishable key.
