@@ -1,0 +1,10 @@
+# Never commit live Supabase dumps, user data, or secrets.
+private-backups/
+**/private-backups/
+*.dump
+*.backup
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
