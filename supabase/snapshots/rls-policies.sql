@@ -1,0 +1,2 @@
+-- Live RLS policy snapshot; review before replay.
+-- No RLS policies returned by pg_policies for selected schemas.
